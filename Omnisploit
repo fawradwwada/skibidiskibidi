@@ -45,7 +45,7 @@ ScreenGui.Parent = game:GetService("CoreGui")
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 300, 0, 650)
+MainFrame.Size = UDim2.new(0, 300, 0, 800)
 MainFrame.Position = UDim2.new(0.8, -150, 0.5, -175)
 MainFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 MainFrame.BorderSizePixel = 0
@@ -69,7 +69,7 @@ TitleText.BackgroundTransparency = 1
 TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.Font = Enum.Font.SourceSansBold
-TitleText.Text = "Roblox Utility v1.0"
+TitleText.Text = "OmniClient 2.3"
 TitleText.TextSize = 18
 TitleText.Parent = TitleBar
 
@@ -1241,151 +1241,556 @@ UpdatePlayerList()
 -- Log successful initialization
 print("Vote Trigger script loaded with Auto Vote! Press Right Control to toggle the interface.")
 print("F6 = Toggle Auto Vote, F7 = Quick Vote")
-
 -- Add this code after the Teleport Implementation section and before the "Initialize feature states" section
 
--- ServerKiller Implementation
-RobloxUtility.ServerKiller = {
-    Active = false,
-    SpinSpeed = 30, -- Rotations per second
-    TeleportDelay = 2, -- Seconds between teleports
-    CurrentTarget = nil,
-    Connection = nil
-}
+-- Demolish Implementation with External GUI
+RobloxUtility.DemolishActive = false
+RobloxUtility.DemolishCycle = nil
 
-RobloxUtility.ServerKiller.Start = function()
-    if RobloxUtility.ServerKiller.Active then return end
-    RobloxUtility.ServerKiller.Active = true
+-- Create External Nuker GUI
+local NukerGui = Instance.new("ScreenGui")
+NukerGui.Name = "NukerGui"
+NukerGui.DisplayOrder = 2 -- Make sure it's above the main GUI
+NukerGui.Parent = game:GetService("CoreGui")
+
+-- Main Nuker Frame
+local NukerFrame = Instance.new("Frame")
+NukerFrame.Name = "NukerFrame"
+NukerFrame.Size = UDim2.new(0, 200, 0, 160)
+NukerFrame.Position = UDim2.new(0, 20, 0.5, -80)
+NukerFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+NukerFrame.BorderSizePixel = 0
+NukerFrame.Active = true
+NukerFrame.Draggable = true
+NukerFrame.Parent = NukerGui
+
+-- Title Bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Size = UDim2.new(1, 0, 0, 25)
+TitleBar.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = NukerFrame
+
+local TitleText = Instance.new("TextLabel")
+TitleText.Name = "TitleText"
+TitleText.Size = UDim2.new(1, -10, 1, 0)
+TitleText.Position = UDim2.new(0, 10, 0, 0)
+TitleText.BackgroundTransparency = 1
+TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+TitleText.Font = Enum.Font.SourceSansBold
+TitleText.Text = "Block Nuker"
+TitleText.TextSize = 16
+TitleText.Parent = TitleBar
+
+-- Close Button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Size = UDim2.new(0, 20, 0, 20)
+CloseButton.Position = UDim2.new(1, -22, 0, 2)
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Font = Enum.Font.SourceSansBold
+CloseButton.Text = "×"
+CloseButton.TextSize = 16
+CloseButton.Parent = TitleBar
+
+-- Folder Input
+local FolderLabel = Instance.new("TextLabel")
+FolderLabel.Name = "FolderLabel"
+FolderLabel.Size = UDim2.new(1, -20, 0, 20)
+FolderLabel.Position = UDim2.new(0, 10, 0, 30)
+FolderLabel.BackgroundTransparency = 1
+FolderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+FolderLabel.TextXAlignment = Enum.TextXAlignment.Left
+FolderLabel.Font = Enum.Font.SourceSans
+FolderLabel.Text = "Target Folder:"
+FolderLabel.TextSize = 14
+FolderLabel.Parent = NukerFrame
+
+local FolderInput = Instance.new("TextBox")
+FolderInput.Name = "FolderInput"
+FolderInput.Size = UDim2.new(1, -20, 0, 25)
+FolderInput.Position = UDim2.new(0, 10, 0, 50)
+FolderInput.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+FolderInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+FolderInput.Text = "Blocks"
+FolderInput.PlaceholderText = "Folder Name"
+FolderInput.Font = Enum.Font.SourceSans
+FolderInput.TextSize = 14
+FolderInput.Parent = NukerFrame
+
+-- Progress Bar
+local ProgressBarBackground = Instance.new("Frame")
+ProgressBarBackground.Name = "ProgressBarBackground"
+ProgressBarBackground.Size = UDim2.new(1, -20, 0, 10)
+ProgressBarBackground.Position = UDim2.new(0, 10, 0, 85)
+ProgressBarBackground.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+ProgressBarBackground.BorderSizePixel = 0
+ProgressBarBackground.Parent = NukerFrame
+
+local ProgressBarFill = Instance.new("Frame")
+ProgressBarFill.Name = "ProgressBarFill"
+ProgressBarFill.Size = UDim2.new(0, 0, 1, 0)
+ProgressBarFill.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+ProgressBarFill.BorderSizePixel = 0
+ProgressBarFill.Parent = ProgressBarBackground
+
+local ProgressText = Instance.new("TextLabel")
+ProgressText.Name = "ProgressText"
+ProgressText.Size = UDim2.new(1, -20, 0, 20)
+ProgressText.Position = UDim2.new(0, 10, 0, 95)
+ProgressText.BackgroundTransparency = 1
+ProgressText.TextColor3 = Color3.fromRGB(255, 255, 255)
+ProgressText.Font = Enum.Font.SourceSans
+ProgressText.Text = "Ready"
+ProgressText.TextSize = 14
+ProgressText.Parent = NukerFrame
+
+-- Nuker Button
+local NukerButton = Instance.new("TextButton")
+NukerButton.Name = "NukerButton"
+NukerButton.Size = UDim2.new(1, -20, 0, 40)
+NukerButton.Position = UDim2.new(0, 10, 0, 120)
+NukerButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+NukerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+NukerButton.Font = Enum.Font.SourceSansBold
+NukerButton.Text = "START NUKER"
+NukerButton.TextSize = 18
+NukerButton.Parent = NukerFrame
+
+-- Function to update progress display
+local function UpdateProgressDisplay(processed, total)
+    local percentage = total > 0 and (processed / total) or 0
+    ProgressBarFill.Size = UDim2.new(percentage, 0, 1, 0)
+    ProgressText.Text = processed .. "/" .. total .. " blocks processed"
+end
+
+-- Function to update button appearance
+local function UpdateButtonAppearance(active)
+    NukerButton.Text = active and "STOP NUKER" or "START NUKER"
+    NukerButton.BackgroundColor3 = active and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
+    TitleBar.BackgroundColor3 = active and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(180, 0, 0)
+end
+
+-- Demolish functionality
+RobloxUtility.Demolish = function()
+    local Players = game:GetService("Players")
+    local ReplicatedStorage = game:GetService("ReplicatedStorage")
+    local LocalPlayer = Players.LocalPlayer
+    local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
     
-    Log("ServerKiller activated")
+    -- Get folder name from input
+    local folderName = FolderInput.Text
+    local targetFolder = workspace:FindFirstChild(folderName)
+    if not targetFolder then
+        ProgressText.Text = "Folder '" .. folderName .. "' not found!"
+        return false
+    end
     
-    -- Create thread for player targeting
-    coroutine.wrap(function()
-        while RobloxUtility.ServerKiller.Active do
-            local players = Players:GetPlayers()
-            for _, player in pairs(players) do
-                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    RobloxUtility.ServerKiller.CurrentTarget = player
-                    local targetRoot = player.Character.HumanoidRootPart
-                    
-                    -- Teleport to this player
-                    Log("ServerKiller targeting: " .. player.Name)
-                    LocalPlayer.Character.HumanoidRootPart.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 3)
-                    
-                    -- Wait before moving to next player
-                    local startTime = tick()
-                    while tick() - startTime < RobloxUtility.ServerKiller.TeleportDelay and RobloxUtility.ServerKiller.Active do
-                        task.wait(0.1)
-                    end
-                    
-                    if not RobloxUtility.ServerKiller.Active then break end
+    -- Equip the tool if needed
+    local Tool = LocalPlayer.Backpack:FindFirstChild("DeleteTool") or Character:FindFirstChild("DeleteTool")
+    if Tool and not Tool:IsDescendantOf(Character) then
+        Tool.Parent = Character
+    end
+    
+    -- Reference to the RemoteEvent
+    local DeleteEvent = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("DeleteEvent")
+    if not DeleteEvent then
+        ProgressText.Text = "DeleteEvent not found in Remotes!"
+        return false
+    end
+    
+    -- Optional: names to exclude even inside the folder
+    local blacklistNames = {
+        "IgnoreMe"
+    }
+    
+    local function isBlacklisted(part)
+        for _, name in ipairs(blacklistNames) do
+            if part.Name == name then
+                return true
+            end
+        end
+        return false
+    end
+    
+    -- Function to delete a part
+    local function deletePart(part)
+        if not part:IsA("BasePart") or isBlacklisted(part) then return end
+        
+        -- Fire delete event
+        DeleteEvent:FireServer(part)
+        
+        task.wait(0.01)
+    end
+    
+    -- Count and process blocks
+    local totalBlocks = 0
+    local processedBlocks = 0
+    
+    for _, part in ipairs(targetFolder:GetDescendants()) do
+        if part:IsA("BasePart") and not isBlacklisted(part) then
+            totalBlocks = totalBlocks + 1
+        end
+    end
+    
+    UpdateProgressDisplay(0, totalBlocks)
+    
+    -- Loop through all parts in the target folder
+    for _, part in ipairs(targetFolder:GetDescendants()) do
+        if RobloxUtility.DemolishActive then
+            deletePart(part)
+            processedBlocks = processedBlocks + 1
+            
+            -- Update progress every few blocks to avoid overwhelming the UI
+            if processedBlocks % 5 == 0 or processedBlocks == totalBlocks then
+                UpdateProgressDisplay(processedBlocks, totalBlocks)
+            end
+        else
+            break
+        end
+    end
+    
+    UpdateProgressDisplay(processedBlocks, totalBlocks)
+    ProgressText.Text = "Cycle completed: " .. processedBlocks .. "/" .. totalBlocks
+    return true
+end
+
+RobloxUtility.ToggleDemolish = function(enable)
+    if enable then
+        if RobloxUtility.DemolishActive then return end
+        RobloxUtility.DemolishActive = true
+        UpdateButtonAppearance(true)
+        ProgressText.Text = "Nuker activated - starting demolish cycles"
+        
+        -- Start continuous demolish cycle
+        RobloxUtility.DemolishCycle = coroutine.wrap(function()
+            while RobloxUtility.DemolishActive do
+                local success = RobloxUtility.Demolish()
+                if not success then
+                    ProgressText.Text = "Demolish cycle failed - check components"
+                    task.wait(2)
+                else
+                    task.wait(0.5) -- Wait between cycles
                 end
             end
-            
-            -- If loop completes, wait a bit before restarting
-            if RobloxUtility.ServerKiller.Active then
-                Log("ServerKiller completed one cycle, restarting...")
-                task.wait(1)
-            end
-        end
-    end)()
-    
-    -- Create spin effect
-    RobloxUtility.ServerKiller.Connection = RunService.Heartbeat:Connect(function(deltaTime)
-        if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+        end)
         
-        -- Spin rapidly around current position
-        local rootPart = LocalPlayer.Character.HumanoidRootPart
-        local currentRot = rootPart.CFrame - rootPart.CFrame.Position
-        local rotationAngle = math.rad(RobloxUtility.ServerKiller.SpinSpeed * 360 * deltaTime)
-        local newRot = currentRot * CFrame.Angles(0, rotationAngle, 0)
-        rootPart.CFrame = CFrame.new(rootPart.Position) * newRot
-    end)
-end
-
-RobloxUtility.ServerKiller.Stop = function()
-    if not RobloxUtility.ServerKiller.Active then return end
-    RobloxUtility.ServerKiller.Active = false
-    
-    -- Disconnect spin connection
-    if RobloxUtility.ServerKiller.Connection then
-        RobloxUtility.ServerKiller.Connection:Disconnect()
-        RobloxUtility.ServerKiller.Connection = nil
-    end
-    
-    RobloxUtility.ServerKiller.CurrentTarget = nil
-    Log("ServerKiller deactivated")
-end
-
--- Create ServerKiller Section in UI
-local ServerKillerSection = CreateSection("Server Killer", 450)
-
--- Create toggle for ServerKiller
-local ServerKillerToggle, serverKillerEnabled = CreateToggle(ServerKillerSection, "Enable Server Killer", false, function(state)
-    if state then
-        RobloxUtility.ServerKiller.Start()
+        RobloxUtility.DemolishCycle()
     else
-        RobloxUtility.ServerKiller.Stop()
+        RobloxUtility.DemolishActive = false
+        UpdateButtonAppearance(false)
+        ProgressText.Text = "Nuker deactivated"
+    end
+end
+
+-- Button click handlers
+local nukerEnabled = false
+NukerButton.MouseButton1Click:Connect(function()
+    nukerEnabled = not nukerEnabled
+    RobloxUtility.ToggleDemolish(nukerEnabled)
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    NukerGui.Enabled = false
+    if RobloxUtility.DemolishActive then
+        RobloxUtility.ToggleDemolish(false)
+        nukerEnabled = false
     end
 end)
 
--- Create sliders for ServerKiller settings
-local SpinSpeedSlider, spinSpeedValue = CreateSlider(ServerKillerSection, "Spin Speed", 1, 50, RobloxUtility.ServerKiller.SpinSpeed, UDim2.new(0, 10, 0, 55), function(value)
-    RobloxUtility.ServerKiller.SpinSpeed = value
-end)
-
-local TeleportDelaySlider, teleportDelayValue = CreateSlider(ServerKillerSection, "Teleport Delay", 0.5, 5, RobloxUtility.ServerKiller.TeleportDelay, UDim2.new(0, 10, 0, 80), function(value)
-    RobloxUtility.ServerKiller.TeleportDelay = value
-end)
-
--- Add current target display
-local TargetDisplay = Instance.new("TextLabel")
-TargetDisplay.Name = "TargetDisplay"
-TargetDisplay.Size = UDim2.new(1, -20, 0, 20)
-TargetDisplay.Position = UDim2.new(0, 10, 0, 105)
-TargetDisplay.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-TargetDisplay.TextColor3 = Color3.fromRGB(255, 255, 255)
-TargetDisplay.Font = Enum.Font.SourceSans
-TargetDisplay.Text = "Current Target: None"
-TargetDisplay.TextSize = 14
-TargetDisplay.TextXAlignment = Enum.TextXAlignment.Left
-TargetDisplay.Parent = ServerKillerSection
-
--- Update target display periodically
-coroutine.wrap(function()
-    while true do
-        if RobloxUtility.ServerKiller.CurrentTarget then
-            TargetDisplay.Text = "Current Target: " .. RobloxUtility.ServerKiller.CurrentTarget.Name
-        else
-            TargetDisplay.Text = "Current Target: None"
-        end
-        wait(0.5)
-    end
-end)()
-
--- Add keypress for quick ServerKiller toggle (F6)
+-- Add keypress for quick toggle (F6) and GUI visibility toggle (F7)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     
     if input.KeyCode == Enum.KeyCode.F6 then
-        local newState = not RobloxUtility.ServerKiller.Active
-        
-        if newState then
-            RobloxUtility.ServerKiller.Start()
-        else
-            RobloxUtility.ServerKiller.Stop()
-        end
-        
-        ServerKillerToggle.Text = newState and "ON" or "OFF"
-        ServerKillerToggle.BackgroundColor3 = newState and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
+        nukerEnabled = not nukerEnabled
+        RobloxUtility.ToggleDemolish(nukerEnabled)
+    elseif input.KeyCode == Enum.KeyCode.F7 then
+        NukerGui.Enabled = not NukerGui.Enabled
     end
 end)
 
--- Update Help Panel
-HelpContent.Text = HelpContent.Text .. "\nF6 - Toggle Server Killer"
+-- Update Help Panel in main GUI to include Nuker shortcuts
+HelpContent.Text = HelpContent.Text .. "\nF6 - Toggle Nuker On/Off\nF7 - Toggle Nuker GUI"
+
+-- Expose toggle function to main utility
+RobloxUtility.ToggleNukerGUI = function(visible)
+    NukerGui.Enabled = visible
+end
+
+-- Add Toggle button to main GUI in the Tools section
+local ToolsSection = CreateSection("Tools", 450)
+
+local NukerToggleButton = Instance.new("TextButton")
+NukerToggleButton.Name = "NukerToggleButton"
+NukerToggleButton.Size = UDim2.new(0.8, 0, 0, 30)
+NukerToggleButton.Position = UDim2.new(0.1, 0, 0, 30)
+NukerToggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+NukerToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+NukerToggleButton.Font = Enum.Font.SourceSansBold
+NukerToggleButton.Text = "Open Nuker GUI"
+NukerToggleButton.TextSize = 16
+NukerToggleButton.Parent = ToolsSection
+
+NukerToggleButton.MouseButton1Click:Connect(function()
+    NukerGui.Enabled = not NukerGui.Enabled
+end)
+
+-- Adjust ContentFrame canvas size
+ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 510)
+
+-- Add this code after the Demolish Implementation section and before the "Initialize feature states" section
+
+-- GodMode Implementation
+RobloxUtility.GodModeActive = false
+RobloxUtility.GodModeConnection = nil
+RobloxUtility.HealthThreshold = 30 -- Health percentage threshold
+RobloxUtility.StoredInventory = {}
+RobloxUtility.IsRefreshing = false
+
+RobloxUtility.SaveInventory = function()
+    RobloxUtility.StoredInventory = {}
+    local Character = LocalPlayer.Character
+    local Humanoid = Character and Character:FindFirstChild("Humanoid")
+    
+    if not Character or not Humanoid then
+        Log("Cannot save inventory - character not found")
+        return false
+    end
+    
+    -- Save all tools from character and backpack
+    for _, tool in pairs(Character:GetChildren()) do
+        if tool:IsA("Tool") then
+            table.insert(RobloxUtility.StoredInventory, {
+                Name = tool.Name,
+                Tool = tool
+            })
+        end
+    end
+    
+    for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+        if tool:IsA("Tool") then
+            table.insert(RobloxUtility.StoredInventory, {
+                Name = tool.Name,
+                Tool = tool
+            })
+        end
+    end
+    
+    Log("Saved " .. #RobloxUtility.StoredInventory .. " items in inventory")
+    return true
+end
+
+RobloxUtility.RestoreInventory = function()
+    local Character = LocalPlayer.Character
+    if not Character then
+        Log("Cannot restore inventory - character not found")
+        return false
+    end
+    
+    -- Wait for character to fully load
+    local Humanoid = Character:WaitForChild("Humanoid", 3)
+    if not Humanoid then
+        Log("Cannot restore inventory - humanoid not found")
+        return false
+    end
+    
+    task.wait(0.5) -- Give the game some time to initialize character
+    
+    local restoredCount = 0
+    -- Restore all tools
+    for _, itemData in pairs(RobloxUtility.StoredInventory) do
+        local tool = itemData.Tool
+        if tool and tool:IsA("Tool") then
+            tool.Parent = LocalPlayer.Backpack
+            restoredCount = restoredCount + 1
+        end
+    end
+    
+    Log("Restored " .. restoredCount .. " items to inventory")
+    RobloxUtility.StoredInventory = {}
+    return true
+end
+
+RobloxUtility.RefreshCharacter = function()
+    if RobloxUtility.IsRefreshing then return end
+    RobloxUtility.IsRefreshing = true
+    
+    Log("Refreshing character...")
+    
+    -- Save inventory before refresh
+    RobloxUtility.SaveInventory()
+    
+    -- Different methods to refresh character
+    local success = false
+    
+    -- Method 1: Using Character:BreakJoints()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.Health = 0
+        success = true
+    end
+    
+    -- If Method 1 didn't work, try method 2 with loadCharacter
+    if not success and LocalPlayer.Character then
+        -- Some games have a custom loadCharacter remote
+        local loadCharacter = ReplicatedStorage:FindFirstChild("LoadCharacter")
+        if loadCharacter and loadCharacter:IsA("RemoteEvent") then
+            loadCharacter:FireServer()
+            success = true
+        end
+    end
+    
+    -- If methods 1 and 2 didn't work, try method 3 with teleport trick
+    if not success and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local currentPosition = LocalPlayer.Character.HumanoidRootPart.CFrame
+        
+        -- Teleport far away and back
+        LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(999999, 999999, 999999)
+        task.wait(0.1)
+        LocalPlayer.Character.HumanoidRootPart.CFrame = currentPosition
+        success = true
+    end
+    
+    -- Wait for new character
+    task.wait(1)
+    
+    -- Setup character respawn detection
+    local connection
+    connection = LocalPlayer.CharacterAdded:Connect(function(newCharacter)
+        connection:Disconnect()
+        task.wait(0.5) -- Wait for character to fully load
+        RobloxUtility.RestoreInventory()
+        RobloxUtility.IsRefreshing = false
+    end)
+    
+    -- Timeout in case character doesn't respawn
+    task.delay(5, function()
+        if connection then
+            connection:Disconnect()
+        end
+        if RobloxUtility.IsRefreshing then
+            Log("Character refresh timed out")
+            RobloxUtility.IsRefreshing = false
+        end
+    end)
+    
+    return success
+end
+
+RobloxUtility.ToggleGodMode = function(enable)
+    if enable then
+        if RobloxUtility.GodModeConnection then return end
+        Log("GodMode activated")
+        
+        -- Connect health monitoring
+        RobloxUtility.GodModeConnection = RunService.Heartbeat:Connect(function()
+            local Character = LocalPlayer.Character
+            if not Character then return end
+            
+            local Humanoid = Character:FindFirstChild("Humanoid")
+            if not Humanoid then return end
+            
+            -- Check if health is below threshold percentage
+            local healthPercentage = (Humanoid.Health / Humanoid.MaxHealth) * 100
+            
+            if healthPercentage <= RobloxUtility.HealthThreshold and not RobloxUtility.IsRefreshing then
+                Log("Health low (" .. math.floor(healthPercentage) .. "%) - refreshing character")
+                RobloxUtility.RefreshCharacter()
+            end
+        end)
+        
+        -- Also connect to character death
+        LocalPlayer.CharacterAdded:Connect(function(newCharacter)
+            if not RobloxUtility.GodModeActive then return end
+            if RobloxUtility.IsRefreshing then return end
+            
+            -- Connect to new character's humanoid died event
+            local Humanoid = newCharacter:WaitForChild("Humanoid")
+            if Humanoid then
+                Humanoid.Died:Connect(function()
+                    if RobloxUtility.GodModeActive and not RobloxUtility.IsRefreshing then
+                        Log("Character died - refreshing character")
+                        task.wait(0.1) -- Small delay before refresh
+                        RobloxUtility.RefreshCharacter()
+                    end
+                end)
+            end
+        end)
+        
+        -- Initialize with current character
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.Died:Connect(function()
+                if RobloxUtility.GodModeActive and not RobloxUtility.IsRefreshing then
+                    Log("Character died - refreshing character")
+                    task.wait(0.1) -- Small delay before refresh
+                    RobloxUtility.RefreshCharacter()
+                end
+            end)
+        end
+        
+        RobloxUtility.GodModeActive = true
+    else
+        if RobloxUtility.GodModeConnection then
+            RobloxUtility.GodModeConnection:Disconnect()
+            RobloxUtility.GodModeConnection = nil
+        end
+        RobloxUtility.GodModeActive = false
+        Log("GodMode deactivated")
+    end
+end
+
+-- Create GodMode Section in UI
+local GodModeSection = CreateSection("GodMode", 540)
+
+-- Create GodMode toggle button
+local GodModeToggle, godModeEnabled = CreateToggle(GodModeSection, "Enable GodMode", RobloxUtility.GodModeActive, function(state)
+    RobloxUtility.ToggleGodMode(state)
+end)
+
+-- Create health threshold slider
+local ThresholdSlider, thresholdValue = CreateSlider(GodModeSection, "Health Threshold %", 5, 90, RobloxUtility.HealthThreshold, UDim2.new(0, 10, 0, 55), function(value)
+    RobloxUtility.HealthThreshold = value
+    Log("GodMode health threshold set to " .. value .. "%")
+end)
+
+-- Create refresh now button
+local RefreshNowButton = Instance.new("TextButton")
+RefreshNowButton.Name = "RefreshNowButton"
+RefreshNowButton.Size = UDim2.new(0.7, 0, 0, 25)
+RefreshNowButton.Position = UDim2.new(0.15, 0, 0, 85)
+RefreshNowButton.BackgroundColor3 = Color3.fromRGB(80, 120, 220)
+RefreshNowButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+RefreshNowButton.Font = Enum.Font.SourceSansBold
+RefreshNowButton.Text = "REFRESH NOW"
+RefreshNowButton.TextSize = 15
+RefreshNowButton.Parent = GodModeSection
+
+RefreshNowButton.MouseButton1Click:Connect(function()
+    RobloxUtility.RefreshCharacter()
+end)
+
+-- Add keypress for quick refresh (F7)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.F7 then
+        RobloxUtility.GodModeActive = not RobloxUtility.GodModeActive
+        GodModeToggle.Text = RobloxUtility.GodModeActive and "ON" or "OFF"
+        GodModeToggle.BackgroundColor3 = RobloxUtility.GodModeActive and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(200, 0, 0)
+        RobloxUtility.ToggleGodMode(RobloxUtility.GodModeActive)
+    elseif input.KeyCode == Enum.KeyCode.F8 then
+        RobloxUtility.RefreshCharacter()
+    end
+end)
+
+-- Update Help Panel to include GodMode shortcuts
+HelpContent.Text = HelpContent.Text .. "\nF7 - Toggle GodMode\nF8 - Refresh Character"
 
 -- Adjust ContentFrame canvas size to accommodate new section
-ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 580)
+ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 1000)
 
 -- Initialize UI
 Log("Roblox Utility initialized! Press Right Alt to toggle UI")
